@@ -16,6 +16,41 @@ M.move_cursor = function(bufnr, line, column)
   end)
 end
 
+M.set_env = function(key, value)
+  local variables = M.read_env_file()
+  variables[key] = value
+  M.write_env_file(variables)
+end
+
+M.write_env_file = function(variables)
+  local env_file = "/" .. (config.get("env_file") or ".env")
+
+  -- Directories to search for env files
+  local env_file_paths = {
+    -- current working directory
+    vim.fn.getcwd() .. env_file,
+    -- directory of the currently opened file
+    vim.fn.expand("%:p:h") .. env_file,
+  }
+
+  -- If there's an env file in the current working dir
+  for _, env_file_path in ipairs(env_file_paths) do
+    if M.file_exists(env_file_path) then
+      local file = io.open(env_file_path, "w+")
+      if file ~= nil then
+        if string.match(env_file_path, "(.-)%.json$") then
+          file:write(vim.fn.json_encode(variables))
+        else
+          for key, value in pairs(variables) do
+            file:write(key .. "=" .. value .. "\n")
+          end
+        end
+        file:close()
+      end
+    end
+  end
+end
+
 M.uuid = function()
   local template = "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx"
   return string.gsub(template, "[xy]", function(c)
@@ -65,9 +100,18 @@ M.read_env_file = function()
   -- If there's an env file in the current working dir
   for _, env_file_path in ipairs(env_file_paths) do
     if M.file_exists(env_file_path) then
-      for line in io.lines(env_file_path) do
-        local vars = M.split(line, "=", 1)
-        variables[vars[1]] = vars[2]
+      if string.match(env_file_path, "(.-)%.json$") then
+        local f = io.open(env_file_path, "r")
+        if f ~= nil then
+          local json_vars = f:read("*all")
+          variables = vim.fn.json_decode(json_vars)
+          f:close()
+        end
+      else
+        for line in io.lines(env_file_path) do
+          local vars = M.split(line, "=", 1)
+          variables[vars[1]] = vars[2]
+        end
       end
     end
   end

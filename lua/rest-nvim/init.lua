@@ -29,6 +29,7 @@ rest.run = function(verbose)
     bufnr = result.bufnr,
     start_line = result.start_line,
     end_line = result.end_line,
+    script_str = result.script_str,
   }
 
   if not verbose then
@@ -67,6 +68,15 @@ rest.last = function()
       "[rest.nvim] Failed to perform the request.\nMake sure that you have entered the proper URL and the server is running.\n\nTraceback: "
         .. req_err
     )
+  end
+end
+
+rest.select_env = function(path)
+  if path ~= nil then
+    vim.validate({ path = { path, "string" } })
+    config.set({ env_file = path })
+  else
+    print("No path given")
   end
 end
 
