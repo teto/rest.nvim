@@ -1,6 +1,7 @@
 local request = require("rest-nvim.request")
 local config = require("rest-nvim.config")
 local curl = require("rest-nvim.curl")
+local log = require("plenary.log").new({ plugin = "rest.nvim", level = "debug" })
 
 local rest = {}
 local Opts = {}
@@ -20,12 +21,41 @@ rest.run = function(verbose)
     return
   end
 
-  return rest.run_request(result, verbose)
+  return rest.run_request(result, {["verbose"] = verbose})
 end
 
-rest.run_request = function(req, verbose)
+-- run will retrieve the required request information from the current buffer
+-- and then execute curl
+-- @param string filename to load
+-- @param opts table
+--           1. keep_going boolean keep running even when last request failed
+rest.run_file = function(filename, opts)
+  log.info("Running file :" .. filename)
+  local new_buf = vim.api.nvim_create_buf(false, false)
 
+  vim.api.nvim_win_set_buf(0, new_buf)
+  vim.cmd.edit(filename)
+  local last_line = vim.fn.line("$")
+
+  -- reset cursor position
+  vim.fn.cursor(1, 1)
+  local curpos = vim.fn.getcurpos()
+  while curpos[2] <= last_line do
+    local ok, req = request.buf_get_request(new_buf, curpos)
+    if ok then
+      -- request.print_request(req)
+      curpos[2] = req.end_line + 1
+      rest.run_request(req, opts)
+    else
+      return false, req
+    end
+  end
+  return true
+end
+
+rest.run_request = function(req, opts)
   local result = req
+  local verbose = opts.verbose or false
   Opts = {
     method = result.method:lower(),
     url = result.url,
@@ -35,7 +65,7 @@ rest.run_request = function(req, verbose)
     raw = config.get("skip_ssl_verification") and vim.list_extend(result.raw, { "-k" })
       or result.raw,
     body = result.body,
-    dry_run = verbose or false,
+    dry_run = verbose,
     bufnr = result.bufnr,
     start_line = result.start_line,
     end_line = result.end_line,
@@ -56,6 +86,7 @@ rest.run_request = function(req, verbose)
       "[rest.nvim] Failed to perform the request.\nMake sure that you have entered the proper URL and the server is running.\n\nTraceback: "
         .. req_err
     )
+    return false, req_err
   end
 end
 
