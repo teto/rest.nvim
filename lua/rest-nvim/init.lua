@@ -19,6 +19,27 @@ rest.setup = function(user_configs)
   backend = require("rest-nvim.parsers."..config.get('parser'))
 end
 
+-- | validate dict is conform to what is expected in an array
+-- in absence of types, that's what we can do best
+local validate_request = function(request)
+
+  return vim.validate({ user_configs = { request, "table" } })
+  -- check keys/values ?
+
+  -- return {
+  --     method = parsed_url.method,
+  --     url = parsed_url.url,
+  --     http_version = parsed_url.http_version,
+  --     headers = headers,
+  --     raw = curl_args,
+  --     body = body,
+  --     bufnr = bufnr,
+  --     start_line = start_line,
+  --     end_line = end_line,
+  --     script_str = script_str
+  --   }
+end
+
 -- run will retrieve the required request information from the current buffer
 -- and then execute curl
 -- @param verbose toggles if only a dry run with preview should be executed (true = preview)
