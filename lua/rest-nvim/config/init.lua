@@ -1,6 +1,7 @@
 local M = {}
 
 local config = {
+  parser = "classic",
   result_split_horizontal = false,
   result_split_in_place = false,
   skip_ssl_verification = false,

@@ -1,4 +1,4 @@
-local backend = require("rest-nvim.request")
+local backend = require("rest-nvim.parsers.classic")
 local config = require("rest-nvim.config")
 local curl = require("rest-nvim.curl")
 local log = require("plenary.log").new({ plugin = "rest.nvim" })
@@ -16,6 +16,7 @@ local LastOpts = {}
 
 rest.setup = function(user_configs)
   config.set(user_configs or {})
+  backend = require("rest-nvim.parsers."..config.get('parser'))
 end
 
 -- run will retrieve the required request information from the current buffer
