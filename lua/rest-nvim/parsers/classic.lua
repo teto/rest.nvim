@@ -2,10 +2,13 @@ local utils = require("rest-nvim.utils")
 local log = require("plenary.log").new({ plugin = "rest.nvim" })
 local config = require("rest-nvim.config")
 
+local M = {}
+
 -- get_importfile returns in case of an imported file the absolute filename
 -- @param bufnr Buffer number, a.k.a id
 -- @param stop_line Line to stop searching
-local function get_importfile_name(bufnr, start_line, stop_line)
+-- @return string unspliced filename 
+function M.get_importfile_name(bufnr, start_line, stop_line)
   -- store old cursor position
   local oldpos = vim.fn.getcurpos()
   utils.move_cursor(bufnr, start_line)
@@ -35,7 +38,7 @@ end
 -- @return table { external = bool; filename_tpl or body_tpl; }
 local function get_body(bufnr, start_line, stop_line)
   -- first check if the body should be imported from an external file
-  local importfile = get_importfile_name(bufnr, start_line, stop_line)
+  local importfile = M.get_importfile_name(bufnr, start_line, stop_line)
   local lines -- an array of strings
   if importfile ~= nil then
     return { external = true, filename_tpl = importfile }
@@ -256,7 +259,6 @@ local function parse_url(stmt)
   }
 end
 
-local M = {}
 M.get_current_request = function()
   return M.buf_get_request(vim.api.nvim_win_get_buf(0), vim.fn.getcurpos())
 end

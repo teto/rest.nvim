@@ -17,13 +17,14 @@ local LastOpts = {}
 rest.setup = function(user_configs)
   config.set(user_configs or {})
   backend = require("rest-nvim.parsers."..config.get('parser'))
+  log.info("Selected backend ".. config.get('parser'))
 end
 
 -- | validate dict is conform to what is expected in an array
 -- in absence of types, that's what we can do best
-local validate_request = function(request)
+local _validate_request = function(request)
 
-  return vim.validate({ user_configs = { request, "table" } })
+  return vim.validate({ method = { request, "table" } })
   -- check keys/values ?
 
   -- return {

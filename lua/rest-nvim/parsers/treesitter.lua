@@ -4,7 +4,7 @@ local log = require("plenary.log").new({ plugin = "rest.nvim" })
 -- local config = require("rest-nvim.config")
 
 local ts = vim.treesitter
-local ts_utils = require 'nvim-treesitter.ts_utils'
+-- local ts_utils = require 'nvim-treesitter.ts_utils'
 
 local parser_name = "http"
 
@@ -47,7 +47,9 @@ M.buf_get_current_request = function(bufnr)
 
   -- old implementation
   -- return M.buf_get_request(vim.api.nvim_win_get_buf(0), vim.fn.getcurpos())
-  local query_node = M.buf_get_request_at_node(bufnr, ts_utils.get_node_at_cursor())
+  local query_node = M.buf_get_request_at_node(bufnr, vim.treesitter.get_node({
+    pos = vim.fn.getcurpos();
+  }))
   print("buf_get_current_request", query_node:type())
   if not query_node then
     local msg = "Could not find any query"
@@ -114,7 +116,7 @@ local function ts_get_body(bufnr, qnode, vars, _has_json)
         print_node("payload file node ?", payload_file_node)
         -- print_node("found payload node: ", node)
         -- replace the filename with variables than load the file
-        local raw_filename = vim.treesitter.query.get_node_text(payload_file_node, bufnr)
+        local raw_filename = vim.treesitter.get_node_text(payload_file_node, bufnr)
         -- local final_filename = utils.replace_vars(raw_filename, vars)
         -- TODO move code ?
         local importfile = load_importfile_name(bufnr, raw_filename, vars)
@@ -152,8 +154,8 @@ M.ts_build_request_from_node = function(reqnode, bufnr)
   local methodfields = reqnode:field("request")
   local methodnode = methodfields[1]:field("method")[1]
   local urlnode = methodfields[1]:field('url')[1]
-  print("url content ?", vim.treesitter.query.get_node_text(urlnode, bufnr))
-  local url = vim.treesitter.query.get_node_text(urlnode, bufnr)
+  print("url content ?", vim.treesitter.get_node_text(urlnode, bufnr))
+  local url = vim.treesitter.get_node_text(urlnode, bufnr)
   url = utils.replace_vars(url, vars)
 
   -- TODO splice header variables/pass variables
@@ -194,7 +196,7 @@ M.ts_build_request_from_node = function(reqnode, bufnr)
   local script_str
   local script_node = ts_load_script(reqnode)
   if script_node then
-    script_str = vim.treesitter.query.get_node_text(script_node, bufnr)
+    script_str = vim.treesitter.get_node_text(script_node, bufnr)
 
     -- THIS IS A HACK until I can retrieve internal_script properly !
     script_str = script_str:match("{%%(.-)%%}")
@@ -217,7 +219,7 @@ M.ts_build_request_from_node = function(reqnode, bufnr)
 
   -- load the body
   -- if script_node then
-  --   script_str = vim.treesitter.query.get_node_text(script_node, bufnr)
+  --   script_str = vim.treesitter.get_node_text(script_node, bufnr)
   -- end
 
   -- local body = get_body(
@@ -234,7 +236,7 @@ M.ts_build_request_from_node = function(reqnode, bufnr)
   -- local script_str = get_response_script(bufnr,headers_end, end_line)
 
   return {
-    method = vim.treesitter.query.get_node_text(methodnode, bufnr),
+    method = vim.treesitter.get_node_text(methodnode, bufnr),
     url = url,
     -- TODO found from parse_url but should use ts as well:
     -- methodnode:field('http_version')[1],
@@ -263,7 +265,7 @@ M.ts_get_headers = function(qnode, bufnr)
       (header) @headers
   ]]
 
-  local parsed_query = ts.parse_query(parser_name, query)
+  local parsed_query = ts.query.parse(parser_name, query)
   -- print(vim.inspect(parsed_query))
   -- local start_row, _, end_row, _ = qnode:range()
   -- print("start row", start_row, "end row", end_row)
@@ -276,9 +278,9 @@ M.ts_get_headers = function(qnode, bufnr)
     -- Returns a table of the nodes corresponding to the {name} field.
 
     local hnamenode = headernode:field("name")[1]
-    local hname = vim.treesitter.query.get_node_text(hnamenode, bufnr)
+    local hname = vim.treesitter.get_node_text(hnamenode, bufnr)
     local valuenode = headernode:field("value")[1]
-    local value = vim.treesitter.query.get_node_text(valuenode, bufnr)
+    local value = vim.treesitter.get_node_text(valuenode, bufnr)
     -- TODO splice value variables !
     headers[hname] = value
   end
@@ -300,10 +302,11 @@ M.buf_get_requests = function(bufnr)
   -- local start_row, _, end_row, _ = root:range()
 
   -- local start_node = root
+  -- find upstream replacement
   local start_node = ts_utils.get_node_at_cursor()
   -- print_node("Node at cursor", start_node)
   -- print("sexpr: " .. start_node:sexpr())
-  local parsed_query = ts.parse_query(parser_name, query)
+  local parsed_query = ts.query.parse(parser_name, query)
   -- print(vim.inspect(parsed_query))
   -- print("start row", start_row, "end row", end_row)
   -- print_node("root", root)
