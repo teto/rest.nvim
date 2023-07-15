@@ -1,3 +1,6 @@
+-- F3 to inspect tree
+-- TODO 
+-- header value must be single line
 local utils = require("rest-nvim.utils")
 -- local path = require("plenary.path")
 local log = require("plenary.log").new({ plugin = "rest.nvim" })
