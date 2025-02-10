@@ -16,6 +16,7 @@
     flake-parts,
     ...
   }: let
+    name = "rest.nvim";
     test-overlay = import ./nix/test-overlay.nix {
       inherit self inputs;
     };
@@ -56,13 +57,13 @@
           ];
         };
 
-        # checks = {
-        #   inherit
-        #     (pkgs)
-        #     # integration-stable
-        #     integration-nightly
-        #     ;
-        # };
+        checks = {
+          inherit
+            (pkgs)
+            integration-stable
+            # integration-nightly
+            ;
+        };
       };
     };
 }
