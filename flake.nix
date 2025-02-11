@@ -17,6 +17,9 @@
     ...
   }: let
     name = "rest.nvim";
+    plugin-overlay = import ./nix/plugin-overlay.nix {
+      inherit self;
+    };
     test-overlay = import ./nix/test-overlay.nix {
       inherit self inputs;
     };
@@ -32,6 +35,7 @@
           overlays = [
             neorocks.overlays.default
             test-overlay
+            plugin-overlay
           ];
         };
       in {
@@ -48,6 +52,8 @@
           shellHook = ''
             export LUA_PATH="$(luarocks path --lr-path --lua-version 5.1 --local)"
             export LUA_CPATH="$(luarocks path --lr-cpath --lua-version 5.1 --local)"
+            export TREE_SITTER_HTTP_PLUGIN_DIR=${pkgs.tree-sitter-http-plugin}
+            export REST_NVIM_PLUGIN_DIR=${pkgs.rest-nvim-dev}
           '';
           buildInputs = [
             pkgs.sumneko-lua-language-server
@@ -61,7 +67,7 @@
           inherit
             (pkgs)
             integration-stable
-            # integration-nightly
+            integration-nightly
             ;
         };
       };

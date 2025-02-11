@@ -14,18 +14,17 @@
           mimetypes
           xml2lua
           fidget-nvim
-          # FIXME: this doesn't work
-          (callPackage ./tree-sitter-http.nix {})
+          final.lua51Packages.tree-sitter-http
         ];
       extraPackages = [
+        jq
       ];
 
       preCheck = ''
         # Neovim expects to be able to create log files, etc.
         export HOME=$(realpath .)
-        # export LUA_PATH="$(luarocks path --lr-path --lua-version 5.1 --local)"
-        # export LUA_CPATH="$(luarocks path --lr-cpath --lua-version 5.1 --local)"
-        # luarocks install --local --lua-version 5.1 --dev tree-sitter-http
+        export TREE_SITTER_HTTP_PLUGIN_DIR=${final.tree-sitter-http-plugin}
+        export REST_NVIM_PLUGIN_DIR=${final.rest-nvim-dev}
       '';
     };
 in {
@@ -42,4 +41,5 @@ in {
     '';
   };
   integration-stable = mkNeorocksTest "integration-stable" final.neovim;
+  integration-nightly = mkNeorocksTest "integration-nightly" final.neovim-nightly;
 }
