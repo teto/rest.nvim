@@ -16,7 +16,6 @@
     flake-parts,
     ...
   }: let
-    name = "rest.nvim";
     plugin-overlay = import ./nix/plugin-overlay.nix {
       inherit self;
     };
@@ -26,7 +25,7 @@
   in
     flake-parts.lib.mkFlake {inherit inputs;} {
       systems = builtins.attrNames nixpkgs.legacyPackages;
-      perSystem = attrs @ {
+      perSystem = {
         system,
         ...
       }: let
@@ -42,8 +41,11 @@
         packages = {
           default = self.packages.${system}.luarocks-51;
           luarocks-51 = pkgs.lua51Packages.luarocks;
+
           inherit
             (pkgs)
+            tree-sitter-http-plugin
+            rest-nvim-dev
             docgen
             ;
         };
